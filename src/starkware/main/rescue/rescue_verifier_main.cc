@@ -43,7 +43,7 @@ VerifierInput GetVerifierInput() {
 
 }  // namespace starkware
 
-int main(int argc, char** argv) {
+int rescue_verify(int argc, char** argv) {
   using namespace starkware;  // NOLINT
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);  // NOLINT
