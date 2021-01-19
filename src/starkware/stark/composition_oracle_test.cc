@@ -326,13 +326,13 @@ void VerifierTestVerifyDecommitment(
       .Times(n_queries)
       .WillRepeatedly(Return(random_element));
 
-  // Create CompositionOracleVerifier.
-  VerifierChannelMock channel;
-  CompositionOracleVerifier oracle_verifier(
-      UseOwned(&evaluation_domain), TakeOwnershipFrom(std::move(trace_ptr)),
-      TakeOwnershipFrom(std::move(composition_trace_ptr)), mask, nullptr,
-      UseOwned(&composition_polynomial), &channel);
-  oracle_verifier.VerifyDecommitment(queries);
+  // // Create CompositionOracleVerifier.
+  // VerifierChannelMock channel;
+  // CompositionOracleVerifier oracle_verifier(
+  //     UseOwned(&evaluation_domain), TakeOwnershipFrom(std::move(trace_ptr)),
+  //     TakeOwnershipFrom(std::move(composition_trace_ptr)), mask, nullptr,
+  //     UseOwned(&composition_polynomial), &channel);
+  // oracle_verifier.VerifyDecommitment(queries);
 }
 
 TEST(CompositionOracleVerifier, VerifyDecommitmentNoComposition) {

@@ -187,154 +187,154 @@ TEST(FriTest, ProverBasicFlowWithMockChannel) {
   EXPECT_EQ(correction_factor * test_layer.EvalAt(eval_point), test_value);
 }
 
-TEST(FriTest, VerifierBasicFlowWithMockChannel) {
-  Prng prng;
-  const size_t last_layer_degree_bound = 5;
-  const size_t proof_of_work_bits = 15;
-  const size_t log2_eval_domain = 10;
+// TEST(FriTest, VerifierBasicFlowWithMockChannel) {
+//   Prng prng;
+//   const size_t last_layer_degree_bound = 5;
+//   const size_t proof_of_work_bits = 15;
+//   const size_t log2_eval_domain = 10;
 
-  const auto offset = BaseFieldElement::RandomElement(&prng);
-  const Coset domain(Pow2(log2_eval_domain), offset);
-  FriParameters params{
-      /*fri_step_list=*/{2, 3, 1},
-      /*last_layer_degree_bound=*/last_layer_degree_bound,
-      /*n_queries=*/2,
-      /*domain=*/domain,
-      /*proof_of_work_bits=*/proof_of_work_bits,
-  };
+//   const auto offset = BaseFieldElement::RandomElement(&prng);
+//   const Coset domain(Pow2(log2_eval_domain), offset);
+//   FriParameters params{
+//       /*fri_step_list=*/{2, 3, 1},
+//       /*last_layer_degree_bound=*/last_layer_degree_bound,
+//       /*n_queries=*/2,
+//       /*domain=*/domain,
+//       /*proof_of_work_bits=*/proof_of_work_bits,
+//   };
 
-  TestPolynomial test_layer(&prng, 64 * last_layer_degree_bound);
-  std::vector<ExtensionFieldElement> witness_data = test_layer.GetData(domain);
-  // Choose evaluation points for the three layers.
-  const std::vector<ExtensionFieldElement> eval_points =
-      prng.RandomFieldElementVector<ExtensionFieldElement>(3);
+//   TestPolynomial test_layer(&prng, 64 * last_layer_degree_bound);
+//   std::vector<ExtensionFieldElement> witness_data = test_layer.GetData(domain);
+//   // Choose evaluation points for the three layers.
+//   const std::vector<ExtensionFieldElement> eval_points =
+//       prng.RandomFieldElementVector<ExtensionFieldElement>(3);
 
-  // Set mock expectations.
-  StrictMock<VerifierChannelMock> verifier_channel;
-  TableVerifierMockFactory<ExtensionFieldElement> table_verifier_factory(
-      {std::make_pair(32, 8), std::make_pair(16, 2)});
-  StrictMock<MockFunction<std::vector<ExtensionFieldElement>(const std::vector<uint64_t>& queries)>>
-      first_layer_queries_callback;
+//   // Set mock expectations.
+//   StrictMock<VerifierChannelMock> verifier_channel;
+//   TableVerifierMockFactory<ExtensionFieldElement> table_verifier_factory(
+//       {std::make_pair(32, 8), std::make_pair(16, 2)});
+//   StrictMock<MockFunction<std::vector<ExtensionFieldElement>(const std::vector<uint64_t>& queries)>>
+//       first_layer_queries_callback;
 
-  const std::vector<ExtensionFieldElement> second_layer = FriFolder::ComputeNextFriLayer(
-      params.GetCosetForLayer(1),
-      FriFolder::ComputeNextFriLayer(domain, witness_data, eval_points[0]), Pow(eval_points[0], 2));
-  const std::vector<ExtensionFieldElement> third_layer = FriFolder::ComputeNextFriLayer(
-      params.GetCosetForLayer(4),
-      FriFolder::ComputeNextFriLayer(
-          params.GetCosetForLayer(3),
-          FriFolder::ComputeNextFriLayer(params.GetCosetForLayer(2), second_layer, eval_points[1]),
-          Pow(eval_points[1], 2)),
-      Pow(eval_points[1], 4));
+//   const std::vector<ExtensionFieldElement> second_layer = FriFolder::ComputeNextFriLayer(
+//       params.GetCosetForLayer(1),
+//       FriFolder::ComputeNextFriLayer(domain, witness_data, eval_points[0]), Pow(eval_points[0], 2));
+//   const std::vector<ExtensionFieldElement> third_layer = FriFolder::ComputeNextFriLayer(
+//       params.GetCosetForLayer(4),
+//       FriFolder::ComputeNextFriLayer(
+//           params.GetCosetForLayer(3),
+//           FriFolder::ComputeNextFriLayer(params.GetCosetForLayer(2), second_layer, eval_points[1]),
+//           Pow(eval_points[1], 2)),
+//       Pow(eval_points[1], 4));
 
-  const std::vector<ExtensionFieldElement> fourth_layer =
-      FriFolder::ComputeNextFriLayer(params.GetCosetForLayer(5), third_layer, eval_points[2]);
+//   const std::vector<ExtensionFieldElement> fourth_layer =
+//       FriFolder::ComputeNextFriLayer(params.GetCosetForLayer(5), third_layer, eval_points[2]);
 
-  std::unique_ptr<LdeManager<ExtensionFieldElement>> fourth_layer_lde =
-      MakeLdeManager<ExtensionFieldElement>(
-          params.GetCosetForLayer(6), /*eval_in_natural_order=*/false);
-  fourth_layer_lde->AddEvaluation(fourth_layer);
-  EXPECT_EQ(fourth_layer_lde->GetEvaluationDegree(0), last_layer_degree_bound - 1);
-  const gsl::span<const ExtensionFieldElement> fourth_layer_coefs =
-      fourth_layer_lde->GetCoefficients(0);
+//   std::unique_ptr<LdeManager<ExtensionFieldElement>> fourth_layer_lde =
+//       MakeLdeManager<ExtensionFieldElement>(
+//           params.GetCosetForLayer(6), /*eval_in_natural_order=*/false);
+//   fourth_layer_lde->AddEvaluation(fourth_layer);
+//   EXPECT_EQ(fourth_layer_lde->GetEvaluationDegree(0), last_layer_degree_bound - 1);
+//   const gsl::span<const ExtensionFieldElement> fourth_layer_coefs =
+//       fourth_layer_lde->GetCoefficients(0);
 
-  {
-    testing::InSequence dummy;
+//   {
+//     testing::InSequence dummy;
 
-    // Commit phase expectations.
-    // The verifier will send three elements - eval_points[0], eval_points[1] and eval_points[2].
-    EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
-        .WillOnce(Return(eval_points[0]));
-    EXPECT_CALL(table_verifier_factory[0], ReadCommitment());
-    EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
-        .WillOnce(Return(eval_points[1]));
-    EXPECT_CALL(table_verifier_factory[1], ReadCommitment());
-    EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
-        .WillOnce(Return(eval_points[2]));
-    // The verifier will read the last layer coefficents.
-    EXPECT_CALL(verifier_channel, ReceiveFieldElementSpanImpl(_))
-        .WillOnce(Invoke([fourth_layer_coefs](gsl::span<ExtensionFieldElement> span) {
-          ASSERT_RELEASE(
-              span.size() == last_layer_degree_bound,
-              "span size is not equal to last layer degree bound.");
-          for (size_t i = 0; i < last_layer_degree_bound; ++i) {
-            span.at(i) = fourth_layer_coefs[i];
-          }
-        }));
+//     // Commit phase expectations.
+//     // The verifier will send three elements - eval_points[0], eval_points[1] and eval_points[2].
+//     EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
+//         .WillOnce(Return(eval_points[0]));
+//     EXPECT_CALL(table_verifier_factory[0], ReadCommitment());
+//     EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
+//         .WillOnce(Return(eval_points[1]));
+//     EXPECT_CALL(table_verifier_factory[1], ReadCommitment());
+//     EXPECT_CALL(verifier_channel, GetAndSendRandomFieldElementImpl())
+//         .WillOnce(Return(eval_points[2]));
+//     // The verifier will read the last layer coefficents.
+//     EXPECT_CALL(verifier_channel, ReceiveFieldElementSpanImpl(_))
+//         .WillOnce(Invoke([fourth_layer_coefs](gsl::span<ExtensionFieldElement> span) {
+//           ASSERT_RELEASE(
+//               span.size() == last_layer_degree_bound,
+//               "span size is not equal to last layer degree bound.");
+//           for (size_t i = 0; i < last_layer_degree_bound; ++i) {
+//             span.at(i) = fourth_layer_coefs[i];
+//           }
+//         }));
 
-    // Query phase expectations.
-    // Proof of work.
-    EXPECT_CALL(verifier_channel, ApplyProofOfWork(proof_of_work_bits));
+//     // Query phase expectations.
+//     // Proof of work.
+//     EXPECT_CALL(verifier_channel, ApplyProofOfWork(proof_of_work_bits));
 
-    // The verifier will send two query locations - 0 and 6.
-    EXPECT_CALL(verifier_channel, GetAndSendRandomNumberImpl(256))
-        .WillOnce(Return(0))
-        .WillOnce(Return(6));
+//     // The verifier will send two query locations - 0 and 6.
+//     EXPECT_CALL(verifier_channel, GetAndSendRandomNumberImpl(256))
+//         .WillOnce(Return(0))
+//         .WillOnce(Return(6));
 
-    // First Layer.
-    // The received cosets for queries 0 and 6, are (0, 1, 2, 3) and (24, 25, 26, 27) respectively.
-    // Upon calling the first_layer_queries_callback, the witness at the these 8 indices will be
-    // given.
-    std::vector<ExtensionFieldElement> witness_elements = {
-        {(witness_data[0]), (witness_data[1]), (witness_data[2]), (witness_data[3]),
-         (witness_data[24]), (witness_data[25]), (witness_data[26]), (witness_data[27])}};
+//     // First Layer.
+//     // The received cosets for queries 0 and 6, are (0, 1, 2, 3) and (24, 25, 26, 27) respectively.
+//     // Upon calling the first_layer_queries_callback, the witness at the these 8 indices will be
+//     // given.
+//     std::vector<ExtensionFieldElement> witness_elements = {
+//         {(witness_data[0]), (witness_data[1]), (witness_data[2]), (witness_data[3]),
+//          (witness_data[24]), (witness_data[25]), (witness_data[26]), (witness_data[27])}};
 
-    EXPECT_CALL(first_layer_queries_callback, Call(ElementsAre(0, 1, 2, 3, 24, 25, 26, 27)))
-        .WillOnce(Return(witness_elements));
+//     EXPECT_CALL(first_layer_queries_callback, Call(ElementsAre(0, 1, 2, 3, 24, 25, 26, 27)))
+//         .WillOnce(Return(witness_elements));
 
-    // Second Layer.
-    // Fake response from prover on the data queries.
-    std::set<RowCol> data_query_indices{RowCol(0, 1), RowCol(0, 2), RowCol(0, 3),
-                                        RowCol(0, 4), RowCol(0, 5), RowCol(0, 7)};
-    std::set<RowCol> integrity_query_indices{RowCol(0, 0), RowCol(0, 6)};
-    std::map<RowCol, ExtensionFieldElement> data_queries_response;
+//     // Second Layer.
+//     // Fake response from prover on the data queries.
+//     std::set<RowCol> data_query_indices{RowCol(0, 1), RowCol(0, 2), RowCol(0, 3),
+//                                         RowCol(0, 4), RowCol(0, 5), RowCol(0, 7)};
+//     std::set<RowCol> integrity_query_indices{RowCol(0, 0), RowCol(0, 6)};
+//     std::map<RowCol, ExtensionFieldElement> data_queries_response;
 
-    for (const RowCol& query : data_query_indices) {
-      data_queries_response.insert({query, second_layer.at(query.GetCol())});
-    }
+//     for (const RowCol& query : data_query_indices) {
+//       data_queries_response.insert({query, second_layer.at(query.GetCol())});
+//     }
 
-    EXPECT_CALL(
-        table_verifier_factory[0], Query(
-                                       UnorderedElementsAreArray(data_query_indices),
-                                       UnorderedElementsAreArray(integrity_query_indices)))
-        .WillOnce(Return(data_queries_response));
+//     EXPECT_CALL(
+//         table_verifier_factory[0], Query(
+//                                        UnorderedElementsAreArray(data_query_indices),
+//                                        UnorderedElementsAreArray(integrity_query_indices)))
+//         .WillOnce(Return(data_queries_response));
 
-    // Add integrity queries to the map, and send this data to verification.
-    data_queries_response.insert({RowCol(0, 0), second_layer.at(0)});
-    data_queries_response.insert({RowCol(0, 6), second_layer.at(6)});
+//     // Add integrity queries to the map, and send this data to verification.
+//     data_queries_response.insert({RowCol(0, 0), second_layer.at(0)});
+//     data_queries_response.insert({RowCol(0, 6), second_layer.at(6)});
 
-    EXPECT_CALL(
-        table_verifier_factory[0],
-        VerifyDecommitment(UnorderedElementsAreArray(data_queries_response)))
-        .WillOnce(Return(true));
+//     EXPECT_CALL(
+//         table_verifier_factory[0],
+//         VerifyDecommitment(UnorderedElementsAreArray(data_queries_response)))
+//         .WillOnce(Return(true));
 
-    // Third Layer.
-    data_query_indices = {RowCol(0, 1)};
-    integrity_query_indices = {RowCol(0, 0)};
-    data_queries_response = {{RowCol(0, 1), third_layer.at(1)}};
-    EXPECT_CALL(
-        table_verifier_factory[1], Query(
-                                       UnorderedElementsAreArray(data_query_indices),
-                                       UnorderedElementsAreArray(integrity_query_indices)))
-        .WillOnce(Return(data_queries_response));
+//     // Third Layer.
+//     data_query_indices = {RowCol(0, 1)};
+//     integrity_query_indices = {RowCol(0, 0)};
+//     data_queries_response = {{RowCol(0, 1), third_layer.at(1)}};
+//     EXPECT_CALL(
+//         table_verifier_factory[1], Query(
+//                                        UnorderedElementsAreArray(data_query_indices),
+//                                        UnorderedElementsAreArray(integrity_query_indices)))
+//         .WillOnce(Return(data_queries_response));
 
-    // Add integrity queries to the map, and send this data to verification.
-    data_queries_response.insert({RowCol(0, 0), third_layer.at(0)});
-    EXPECT_CALL(
-        table_verifier_factory[1],
-        VerifyDecommitment(UnorderedElementsAreArray(data_queries_response)))
-        .WillOnce(Return(true));
-  }
-  TableVerifierFactory<ExtensionFieldElement> table_verifier_factory_as_factory =
-      table_verifier_factory.AsFactory();
-  FriVerifier::FirstLayerCallback first_layer_queries_callback_as_function =
-      first_layer_queries_callback.AsStdFunction();
-  FriVerifier fri_verifier(
-      UseOwned(&verifier_channel), UseOwned(&table_verifier_factory_as_factory), UseOwned(&params),
-      UseOwned(&first_layer_queries_callback_as_function));
-  fri_verifier.VerifyFri();
-  LOG(INFO) << verifier_channel;
-}
+//     // Add integrity queries to the map, and send this data to verification.
+//     data_queries_response.insert({RowCol(0, 0), third_layer.at(0)});
+//     EXPECT_CALL(
+//         table_verifier_factory[1],
+//         VerifyDecommitment(UnorderedElementsAreArray(data_queries_response)))
+//         .WillOnce(Return(true));
+//   }
+//   TableVerifierFactory<ExtensionFieldElement> table_verifier_factory_as_factory =
+//       table_verifier_factory.AsFactory();
+//   FriVerifier::FirstLayerCallback first_layer_queries_callback_as_function =
+//       first_layer_queries_callback.AsStdFunction();
+//   FriVerifier fri_verifier(
+//       UseOwned(&verifier_channel), UseOwned(&table_verifier_factory_as_factory), UseOwned(&params),
+//       UseOwned(&first_layer_queries_callback_as_function));
+//   fri_verifier.VerifyFri();
+//   LOG(INFO) << verifier_channel;
+// }
 
 struct FriTestDefinitions0 {
   static constexpr std::array<size_t, 4> kFriStepList = {0, 2, 1, 4};
