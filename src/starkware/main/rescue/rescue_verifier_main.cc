@@ -13,7 +13,7 @@
 #include "starkware/utils/json.h"
 
 DEFINE_string(in_file, "", "Path to the input file.");
-DEFINE_validator(in_file, &starkware::ValidateInputFile);
+// DEFINE_validator(in_file, &starkware::ValidateInputFile);
 
 DEFINE_string(
     annotation_file, "",

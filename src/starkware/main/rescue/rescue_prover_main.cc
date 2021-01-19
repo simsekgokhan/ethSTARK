@@ -18,25 +18,25 @@
 DEFINE_string(
     out_file, "",
     "Path to the output file, into which the context and output of the prover will be written.");
-DEFINE_validator(out_file, &starkware::ValidateOutputFile);
+// DEFINE_validator(out_file, &starkware::ValidateOutputFile);
 
 DEFINE_string(
     prover_config_file, "",
     "Path to the JSON file containing parameters controlling the prover's optimization.");
-DEFINE_validator(prover_config_file, &starkware::ValidateInputFile);
+// DEFINE_validator(prover_config_file, &starkware::ValidateInputFile);
 
 DEFINE_bool(generate_annotations, false, "Optional. Generate proof annotations.");
 
 DEFINE_bool(fix_public_input, false, "Optional. Re-compute the public input.");
 
 DEFINE_string(parameter_file, "", "Path to the JSON file containing the proof parameters.");
-DEFINE_validator(parameter_file, &starkware::ValidateInputFile);
+// DEFINE_validator(parameter_file, &starkware::ValidateInputFile);
 
 DEFINE_string(public_input_file, "", "Path to the JSON file containing the public input.");
-DEFINE_validator(public_input_file, &starkware::ValidateInputFile);
+// DEFINE_validator(public_input_file, &starkware::ValidateInputFile);
 
 DEFINE_string(private_input_file, "", "Path to the JSON file containing the private input.");
-DEFINE_validator(private_input_file, &starkware::ValidateInputFile);
+// DEFINE_validator(private_input_file, &starkware::ValidateInputFile);
 
 namespace starkware {
 
@@ -73,7 +73,7 @@ void DisableCoreDump() {
 
 }  // namespace starkware
 
-int main(int argc, char** argv) {
+int rescue_prove(int argc, char** argv) {
   using namespace starkware;  // NOLINT
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);  // NOLINT
