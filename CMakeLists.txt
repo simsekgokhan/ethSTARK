@@ -21,8 +21,8 @@ if (NOT DEFINED CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-mismatched-tags -fno-strict-aliasing")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -Wall -Wextra -Wno-mismatched-tags -fno-strict-aliasing -fPIE")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIE")
 
 set(CC_OPTIMIZE "-O3")
 
