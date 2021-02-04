@@ -13,7 +13,7 @@
 #include "starkware/utils/json.h"
 
 DEFINE_string(in_file, "", "Path to the input file.");
-// DEFINE_validator(in_file, &starkware::ValidateInputFile);
+DEFINE_validator(in_file, &starkware::ValidateInputFile);
 
 DEFINE_string(
     annotation_file, "",
@@ -43,7 +43,7 @@ VerifierInput GetVerifierInput() {
 
 }  // namespace starkware
 
-int rescue_verify(int argc, char** argv) {
+int main(int argc, char** argv) {
   using namespace starkware;  // NOLINT
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   google::InitGoogleLogging(argv[0]);  // NOLINT
