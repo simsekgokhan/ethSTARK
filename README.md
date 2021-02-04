@@ -1,5 +1,5 @@
 ### ## Fork Summary 
-This fork is slightly modified to be used by https://github.com/simsekgokhan/rustSTARK.     
+This fork is slightly modified in order to be used by https://github.com/simsekgokhan/rustSTARK.     
 Currently, only `rescue_verifier::verify()` function is being used/tested.     
 So, changes in `rescue_prover` can be ignored.  
 
