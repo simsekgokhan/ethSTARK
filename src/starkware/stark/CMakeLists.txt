@@ -14,9 +14,9 @@ add_executable(committed_trace_test committed_trace_test.cc)
 target_link_libraries(committed_trace_test committed_trace merkle_tree channel starkware_gtest)
 add_test(committed_trace_test committed_trace_test)
 
-add_executable(composition_oracle_test composition_oracle_test.cc)
-target_link_libraries(composition_oracle_test composition_oracle starkware_gtest)
-add_test(composition_oracle_test composition_oracle_test)
+# add_executable(composition_oracle_test composition_oracle_test.cc)
+# target_link_libraries(composition_oracle_test composition_oracle starkware_gtest)
+# add_test(composition_oracle_test composition_oracle_test)
 
 add_executable(oods_test oods_test.cc)
 target_link_libraries(oods_test oods test_air channel starkware_gtest)

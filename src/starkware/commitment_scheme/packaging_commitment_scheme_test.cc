@@ -37,20 +37,20 @@ size_t GetNumOfPackages(
   // Check that packaging_prover calls factory with correct parameters.
   EXPECT_EQ(prover_factory_input, packaging_prover.GetNumOfPackages());
 
-  // // Verifier.
-  // StrictMock<VerifierChannelMock> verifier_channel;
-  // size_t verifier_factory_input;
-  // const PackagingCommitmentSchemeVerifier packaging_verifier(
-  //     size_of_element, n_elements_in_segment * n_segments, &verifier_channel,
-  //     [&verifier_factory_input](
-  //         size_t n_elements_inner_layer) -> std::unique_ptr<CommitmentSchemeVerifier> {
-  //       verifier_factory_input = n_elements_inner_layer;
-  //       return std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
-  //     });
-  // // Check that packaging_verifier calls factory with correct parameters.
-  // EXPECT_EQ(verifier_factory_input, packaging_verifier.GetNumOfPackages());
+  // Verifier.
+  StrictMock<VerifierChannelMock> verifier_channel;
+  size_t verifier_factory_input;
+  const PackagingCommitmentSchemeVerifier packaging_verifier(
+      size_of_element, n_elements_in_segment * n_segments, &verifier_channel,
+      [&verifier_factory_input](
+          size_t n_elements_inner_layer) -> std::unique_ptr<CommitmentSchemeVerifier> {
+        verifier_factory_input = n_elements_inner_layer;
+        return std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
+      });
+  // Check that packaging_verifier calls factory with correct parameters.
+  EXPECT_EQ(verifier_factory_input, packaging_verifier.GetNumOfPackages());
 
-  // EXPECT_EQ(packaging_prover.GetNumOfPackages(), packaging_verifier.GetNumOfPackages());
+  EXPECT_EQ(packaging_prover.GetNumOfPackages(), packaging_verifier.GetNumOfPackages());
   return packaging_prover.GetNumOfPackages();
 }
 
@@ -208,90 +208,90 @@ TEST(PackagingCommitmentSchemeProver, StartDecommitmentPhaseAndDecommit) {
 
 // ---------- Verifier tests -----------
 
-// TEST(PackagingCommitmentSchemeVerifier, ReadCommitment) {
-//   Prng prng;
-//   StrictMock<VerifierChannelMock> verifier_channel;
-//   PackagingCommitmentSchemeVerifier packaging_verifier(
-//       prng.UniformInt<size_t>(1, sizeof(Blake2s160) * 5), Pow2(prng.UniformInt<size_t>(1, 10)),
-//       &verifier_channel,
-//       [](size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
-//         auto inner_commitment_scheme_verifier =
-//             std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
-//         EXPECT_CALL(*inner_commitment_scheme_verifier, ReadCommitment());
-//         return inner_commitment_scheme_verifier;
-//       });
-//   packaging_verifier.ReadCommitment();
-// }
+TEST(PackagingCommitmentSchemeVerifier, ReadCommitment) {
+  Prng prng;
+  StrictMock<VerifierChannelMock> verifier_channel;
+  PackagingCommitmentSchemeVerifier packaging_verifier(
+      prng.UniformInt<size_t>(1, sizeof(Blake2s160) * 5), Pow2(prng.UniformInt<size_t>(1, 10)),
+      &verifier_channel,
+      [](size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
+        auto inner_commitment_scheme_verifier =
+            std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
+        EXPECT_CALL(*inner_commitment_scheme_verifier, ReadCommitment());
+        return inner_commitment_scheme_verifier;
+      });
+  packaging_verifier.ReadCommitment();
+}
 
-// TEST(PackagingCommitmentSchemeVerifier, VerifyIntegritySmallElement) {
-//   Prng prng;
-//   StrictMock<VerifierChannelMock> verifier_channel;
-//   // Disable annotation to avoid running part of code in verifier_channel.ReceiveData() (note that
-//   // verifier_channel is a mock, there is no real interaction between prover and verifier).
-//   verifier_channel.DisableAnnotations();
-//   const size_t element_size_small = 17;
-//   const size_t n_elements = Pow2(prng.UniformInt<size_t>(4, 10));
-//   PackagingCommitmentSchemeVerifier packaging_verifier(
-//       element_size_small, n_elements, &verifier_channel,
-//       [](size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
-//         auto inner_commitment_scheme_verifier =
-//             std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
-//         EXPECT_CALL(*inner_commitment_scheme_verifier, VerifyIntegrity(testing::_));
-//         return inner_commitment_scheme_verifier;
-//       });
-//   // Create 3 elements to verify.
-//   std::map<uint64_t, std::vector<std::byte>> elements_to_verify;
-//   elements_to_verify[1] = prng.RandomByteVector(element_size_small);
-//   elements_to_verify[10] = prng.RandomByteVector(element_size_small);
-//   elements_to_verify[11] = prng.RandomByteVector(element_size_small);
-//   // Get required elements from channel. The verifier gets 5 elements from channel: 3 to calculate
-//   // element number 1, and 2 to calculate elements number 10 and 11.
-//   // Explanation: number of elements in package is 4 (package size is 2 *
-//   // Blake2s160::kDigestNumBytes and element size is 17, for full explanation of number of elements
-//   // in package calculation see Packer_hasher.ComputeNumElementsInPackage). Hence, In order to
-//   // verify element number 1 the verifier needs elements 0,2,3; and in order to verify elements
-//   // number 10 and 11 the verifier needs elements number 8, 9.
-//   EXPECT_CALL(verifier_channel, ReceiveBytes(element_size_small))
-//       .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
-//       .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
-//       .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
-//       .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
-//       .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)));
-//   packaging_verifier.VerifyIntegrity(elements_to_verify);
-// }
+TEST(PackagingCommitmentSchemeVerifier, VerifyIntegritySmallElement) {
+  Prng prng;
+  StrictMock<VerifierChannelMock> verifier_channel;
+  // Disable annotation to avoid running part of code in verifier_channel.ReceiveData() (note that
+  // verifier_channel is a mock, there is no real interaction between prover and verifier).
+  verifier_channel.DisableAnnotations();
+  const size_t element_size_small = 17;
+  const size_t n_elements = Pow2(prng.UniformInt<size_t>(4, 10));
+  PackagingCommitmentSchemeVerifier packaging_verifier(
+      element_size_small, n_elements, &verifier_channel,
+      [](size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
+        auto inner_commitment_scheme_verifier =
+            std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
+        EXPECT_CALL(*inner_commitment_scheme_verifier, VerifyIntegrity(testing::_));
+        return inner_commitment_scheme_verifier;
+      });
+  // Create 3 elements to verify.
+  std::map<uint64_t, std::vector<std::byte>> elements_to_verify;
+  elements_to_verify[1] = prng.RandomByteVector(element_size_small);
+  elements_to_verify[10] = prng.RandomByteVector(element_size_small);
+  elements_to_verify[11] = prng.RandomByteVector(element_size_small);
+  // Get required elements from channel. The verifier gets 5 elements from channel: 3 to calculate
+  // element number 1, and 2 to calculate elements number 10 and 11.
+  // Explanation: number of elements in package is 4 (package size is 2 *
+  // Blake2s160::kDigestNumBytes and element size is 17, for full explanation of number of elements
+  // in package calculation see Packer_hasher.ComputeNumElementsInPackage). Hence, In order to
+  // verify element number 1 the verifier needs elements 0,2,3; and in order to verify elements
+  // number 10 and 11 the verifier needs elements number 8, 9.
+  EXPECT_CALL(verifier_channel, ReceiveBytes(element_size_small))
+      .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
+      .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
+      .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
+      .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)))
+      .WillOnce(testing::Return(std::vector<std::byte>(element_size_small)));
+  packaging_verifier.VerifyIntegrity(elements_to_verify);
+}
 
-// TEST(PackagingCommitmentSchemeVerifier, VerifyIntegrityBigElement) {
-//   Prng prng;
-//   StrictMock<VerifierChannelMock> verifier_channel;
-//   // Disables annotation to avoid running part of code in verifier_channel.ReceiveData() (note that
-//   // verifier_channel is a mock, there is no real interaction between prover and verifier).
-//   verifier_channel.DisableAnnotations();
-//   // Size of element is greater than package size (which is 2 * Blake2s160::kDigestNumBytes), hence
-//   // each package contains a single element. No extra elements are needed to calculate hash of a
-//   // single element to verify.
-//   const size_t element_size_big =
-//       prng.UniformInt<size_t>(sizeof(Blake2s160) * 2, sizeof(Blake2s160) * 5);
-//   const size_t n_elements = Pow2(prng.UniformInt<size_t>(4, 10));
+TEST(PackagingCommitmentSchemeVerifier, VerifyIntegrityBigElement) {
+  Prng prng;
+  StrictMock<VerifierChannelMock> verifier_channel;
+  // Disables annotation to avoid running part of code in verifier_channel.ReceiveData() (note that
+  // verifier_channel is a mock, there is no real interaction between prover and verifier).
+  verifier_channel.DisableAnnotations();
+  // Size of element is greater than package size (which is 2 * Blake2s160::kDigestNumBytes), hence
+  // each package contains a single element. No extra elements are needed to calculate hash of a
+  // single element to verify.
+  const size_t element_size_big =
+      prng.UniformInt<size_t>(sizeof(Blake2s160) * 2, sizeof(Blake2s160) * 5);
+  const size_t n_elements = Pow2(prng.UniformInt<size_t>(4, 10));
 
-//   // Creates 3 elements to verify.
-//   std::map<uint64_t, std::vector<std::byte>> elements_to_verify;
-//   elements_to_verify[1] = prng.RandomByteVector(element_size_big);
-//   elements_to_verify[10] = prng.RandomByteVector(element_size_big);
-//   elements_to_verify[11] = prng.RandomByteVector(element_size_big);
+  // Creates 3 elements to verify.
+  std::map<uint64_t, std::vector<std::byte>> elements_to_verify;
+  elements_to_verify[1] = prng.RandomByteVector(element_size_big);
+  elements_to_verify[10] = prng.RandomByteVector(element_size_big);
+  elements_to_verify[11] = prng.RandomByteVector(element_size_big);
 
-//   const PackerHasher packer(element_size_big, n_elements);
-//   auto inner_commitment_scheme_verifier =
-//       std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
-//   EXPECT_CALL(
-//       *inner_commitment_scheme_verifier, VerifyIntegrity(packer.PackAndHash(elements_to_verify)));
-//   PackagingCommitmentSchemeVerifier packaging_verifier(
-//       element_size_big, n_elements, &verifier_channel,
-//       [&inner_commitment_scheme_verifier](
-//           size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
-//         return std::move(inner_commitment_scheme_verifier);
-//       });
-//   packaging_verifier.VerifyIntegrity(elements_to_verify);
-// }
+  const PackerHasher packer(element_size_big, n_elements);
+  auto inner_commitment_scheme_verifier =
+      std::make_unique<StrictMock<CommitmentSchemeVerifierMock>>();
+  EXPECT_CALL(
+      *inner_commitment_scheme_verifier, VerifyIntegrity(packer.PackAndHash(elements_to_verify)));
+  PackagingCommitmentSchemeVerifier packaging_verifier(
+      element_size_big, n_elements, &verifier_channel,
+      [&inner_commitment_scheme_verifier](
+          size_t /*n_elements_inner_layer*/) -> std::unique_ptr<CommitmentSchemeVerifier> {
+        return std::move(inner_commitment_scheme_verifier);
+      });
+  packaging_verifier.VerifyIntegrity(elements_to_verify);
+}
 
 }  // namespace
 }  // namespace starkware

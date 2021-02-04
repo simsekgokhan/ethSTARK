@@ -1,9 +1,9 @@
 add_library(fri fri_prover.cc fri_verifier.cc fri_details.cc fri_folder.cc fri_layer.cc fri_committed_layer.cc)
 target_link_libraries(fri algebra json third_party)
 
-add_executable(fri_test fri_test.cc fri_details_test.cc)
-target_link_libraries(fri_test fri channel merkle_commitment_scheme packaging_commitment_scheme table proof_system starkware_gtest)
-add_test(fri_test fri_test)
+# add_executable(fri_test fri_test.cc fri_details_test.cc)
+# target_link_libraries(fri_test fri channel merkle_commitment_scheme packaging_commitment_scheme table proof_system starkware_gtest)
+# add_test(fri_test fri_test)
 
 add_executable(fri_details_test fri_details_test.cc)
 target_link_libraries(fri_details_test fri channel merkle_commitment_scheme packaging_commitment_scheme table proof_system starkware_gtest)

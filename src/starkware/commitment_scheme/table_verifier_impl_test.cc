@@ -157,74 +157,74 @@ bool TableVerifierImplTest::VerifyProof(
   the underlying commitment scheme is called with the right index to all-bytes-of-that-row map.
   5. Check that when the underlying scheme returns true - so does the TableVerifier.
 */
-// TEST_F(TableVerifierImplTest, BasicFlow) {
-//   const size_t n_columns = 3;
-//   const uint64_t n_rows = 6;
-//   const unsigned r = 1000;
-//   StrictMock<VerifierChannelMock> verifier_channel;
-//   StrictMock<CommitmentSchemeVerifierMock> commitment_scheme;
-//   TableVerifierImpl<BaseFieldElement> table_verifier(
-//       n_columns, UseOwned(&commitment_scheme), &verifier_channel);
-//   EXPECT_CALL(commitment_scheme, ReadCommitment());
-//   table_verifier.ReadCommitment();
-//   std::set<RowCol> data_queries = {{0, 0}, {1, 0}, {1, 2}, {2, 1}};
-//   std::set<RowCol> integrity_queries = {{0, 2}, {1, 1}, {4, 0}, {4, 1}, {4, 2}, {5, 0}};
-//   std::set<size_t> skipped_rows = {3};
-//   // We use a 5 X 3 table, where cell i,j inhabits a field element whose index is r * i + j (r is
-//   // set to 1000 to make debugging easier).
-//   std::map<RowCol, BaseFieldElement> channel_response;
-//   for (size_t i = 0; i < n_rows; ++i) {
-//     if (0 != Count(skipped_rows, i)) {
-//       continue;
-//     }
-//     for (size_t j = 0; j < n_columns; ++j) {
-//       if (0 == Count(integrity_queries, RowCol(i, j))) {
-//         // The TableVerifier expects all the non-integrity-queries elements, which are in a row
-//         // with some queried element, to be in the response.
-//         channel_response.insert({{i, j}, BaseFieldElement::FromUint(i * r + j)});
-//       }
-//     }
-//   }
-//   // Set the expectations for the verifier channel's calls, and the elements to send through
-//   // its mock.
-//   {
-//     InSequence dummy;
-//     for (auto& it : channel_response) {
-//       EXPECT_CALL(verifier_channel, ReceiveBaseFieldElementImpl()).WillOnce(Return(it.second));
-//     }
-//   }
-//   std::map<RowCol, BaseFieldElement> response =
-//       table_verifier.Query(data_queries, integrity_queries);
-//   // Test that the response is what we'd expect, i.e. - everything but the integrity queries is
-//   // there.
-//   EXPECT_THAT(response, ElementsAreArray(channel_response));
+TEST_F(TableVerifierImplTest, BasicFlow) {
+  const size_t n_columns = 3;
+  const uint64_t n_rows = 6;
+  const unsigned r = 1000;
+  StrictMock<VerifierChannelMock> verifier_channel;
+  StrictMock<CommitmentSchemeVerifierMock> commitment_scheme;
+  TableVerifierImpl<BaseFieldElement> table_verifier(
+      n_columns, UseOwned(&commitment_scheme), &verifier_channel);
+  EXPECT_CALL(commitment_scheme, ReadCommitment());
+  table_verifier.ReadCommitment();
+  std::set<RowCol> data_queries = {{0, 0}, {1, 0}, {1, 2}, {2, 1}};
+  std::set<RowCol> integrity_queries = {{0, 2}, {1, 1}, {4, 0}, {4, 1}, {4, 2}, {5, 0}};
+  std::set<size_t> skipped_rows = {3};
+  // We use a 5 X 3 table, where cell i,j inhabits a field element whose index is r * i + j (r is
+  // set to 1000 to make debugging easier).
+  std::map<RowCol, BaseFieldElement> channel_response;
+  for (size_t i = 0; i < n_rows; ++i) {
+    if (0 != Count(skipped_rows, i)) {
+      continue;
+    }
+    for (size_t j = 0; j < n_columns; ++j) {
+      if (0 == Count(integrity_queries, RowCol(i, j))) {
+        // The TableVerifier expects all the non-integrity-queries elements, which are in a row
+        // with some queried element, to be in the response.
+        channel_response.insert({{i, j}, BaseFieldElement::FromUint(i * r + j)});
+      }
+    }
+  }
+  // Set the expectations for the verifier channel's calls, and the elements to send through
+  // its mock.
+  {
+    InSequence dummy;
+    for (auto& it : channel_response) {
+      EXPECT_CALL(verifier_channel, ReceiveBaseFieldElementImpl()).WillOnce(Return(it.second));
+    }
+  }
+  std::map<RowCol, BaseFieldElement> response =
+      table_verifier.Query(data_queries, integrity_queries);
+  // Test that the response is what we'd expect, i.e. - everything but the integrity queries is
+  // there.
+  EXPECT_THAT(response, ElementsAreArray(channel_response));
 
-//   // Add the integrity queries to the elements we wish to verify.
-//   std::map<RowCol, BaseFieldElement> to_verify(response);
-//   for (const auto& iq : integrity_queries) {
-//     to_verify.insert({iq, BaseFieldElement::FromUint(iq.GetRow() * r + iq.GetCol())});
-//   }
+  // Add the integrity queries to the elements we wish to verify.
+  std::map<RowCol, BaseFieldElement> to_verify(response);
+  for (const auto& iq : integrity_queries) {
+    to_verify.insert({iq, BaseFieldElement::FromUint(iq.GetRow() * r + iq.GetCol())});
+  }
 
-//   // Add the underlying map that TableVerifier is expected to send to the commitment scheme, where
-//   // each row's number is the key, and the entire row serialized to bytes is the value.
-//   std::map<uint64_t, std::vector<std::byte>> integrity_map;
-//   for (size_t i = 0; i < n_rows; ++i) {
-//     if (0 != Count(skipped_rows, i)) {
-//       continue;
-//     }
-//     std::vector<std::byte> v(n_columns * BaseFieldElement::SizeInBytes());
-//     auto v_byte_span = gsl::make_span(v);
-//     for (size_t j = 0; j < n_columns; ++j) {
-//       to_verify.at(RowCol(i, j))
-//           .ToBytes(v_byte_span.subspan(
-//               j * BaseFieldElement::SizeInBytes(), BaseFieldElement::SizeInBytes()));
-//     }
-//     integrity_map.insert({i, v});
-//   }
-//   EXPECT_CALL(commitment_scheme, VerifyIntegrity(integrity_map)).WillOnce(Return(true));
-//   bool result = table_verifier.VerifyDecommitment(to_verify);
-//   EXPECT_TRUE(result);
-// }
+  // Add the underlying map that TableVerifier is expected to send to the commitment scheme, where
+  // each row's number is the key, and the entire row serialized to bytes is the value.
+  std::map<uint64_t, std::vector<std::byte>> integrity_map;
+  for (size_t i = 0; i < n_rows; ++i) {
+    if (0 != Count(skipped_rows, i)) {
+      continue;
+    }
+    std::vector<std::byte> v(n_columns * BaseFieldElement::SizeInBytes());
+    auto v_byte_span = gsl::make_span(v);
+    for (size_t j = 0; j < n_columns; ++j) {
+      to_verify.at(RowCol(i, j))
+          .ToBytes(v_byte_span.subspan(
+              j * BaseFieldElement::SizeInBytes(), BaseFieldElement::SizeInBytes()));
+    }
+    integrity_map.insert({i, v});
+  }
+  EXPECT_CALL(commitment_scheme, VerifyIntegrity(integrity_map)).WillOnce(Return(true));
+  bool result = table_verifier.VerifyDecommitment(to_verify);
+  EXPECT_TRUE(result);
+}
 
 /*
   Generates random data and integrity queries for a given table dimensions.
