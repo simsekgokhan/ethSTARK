@@ -5,7 +5,7 @@ So, changes in `rescue_prover` can be ignored.
 
 Summary of changes in this fork:   
 - C/C++ flag `-fPIE` added (to solve Rust link errors)
-- New file `rescue_verifier.cc` (and `rescue_verifier` library) added which uses the almost the same code as original `rescue_verifier_main.cc`  
+- New file `rescue_verifier.cc` (and `rescue_verifier` library) added which uses almost the same code as original `rescue_verifier_main.cc`.
 - Some tests are disabled to prevent build errors on unsupported Ubuntu 20.04 which has no effect on main library code.  
 
 ----------------------------------- Original /ethSTARK/starkware-libs/README.md ------------------------------
