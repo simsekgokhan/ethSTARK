@@ -3,6 +3,7 @@
 */
 
 #include <memory>
+#include <chrono>
 
 #include "glog/logging.h"
 
@@ -25,12 +26,21 @@ bool rescue_verify(
     std::vector<std::byte> proof((proof_hex.size()-1) / 2);
     starkware::HexStringToBytes(proof_hex, proof);  
 
+    auto const start = std::chrono::system_clock::now();    
+    
     bool result = starkware::VerifierMainHelper(
         &statement, 
         proof,      
         JsonValue::FromString(parameters),
         annotation_file_name
     );
+
+    auto const end = std::chrono::system_clock::now();
+    auto const time_elapsed = 
+      std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "-------" << std::endl;
+    std::cout << "--- time_elapsed: " << time_elapsed << " msec \n";
+    std::cout << "-------" << std::endl;
 
     if (result) {
       LOG(INFO) << "Proof verified successfully.";
@@ -40,7 +50,7 @@ bool rescue_verify(
 
     return result;
   } catch(std::exception const& e) {
-    std::cout << "ethSTARK exception: " << e.what() << std::endl;
+    std::cout << "--- ethSTARK exception: " << e.what() << std::endl;
     return false;
   }
 }

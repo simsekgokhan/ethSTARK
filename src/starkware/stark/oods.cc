@@ -149,8 +149,9 @@ std::vector<std::tuple<size_t, ExtensionFieldElement, ExtensionFieldElement>> Ve
       poly_break.EvalFromSamples(broken_evaluation, point);
 
   // Verify the OODS equation is satisfied.
-  ASSERT_RELEASE(
-      trace_side_value == broken_side_value, "Out of domain sampling verification failed.");
+  if(trace_side_value != broken_side_value)
+    throw std::runtime_error(
+      "--- oods.cc: Out of domain sampling verification failed.");
 
   return boundary_constraints;
 }

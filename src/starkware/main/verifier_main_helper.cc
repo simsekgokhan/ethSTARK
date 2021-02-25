@@ -61,7 +61,7 @@ bool VerifierMainHelper(
     }
 
     return result;
-  } catch (const StarkwareException& e) {
+  } catch (const std::exception &e) {
     LOG(ERROR) << e.what();
     return false;
   }
